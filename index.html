@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#432574">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Fruchtzauber – Windows, iPhone & Android</title>
+<meta name="description" content="Fruchtzauber: 3-Gewinnt-Spiel mit Bossen, Bomben, Spezialfrüchten und Touchsteuerung. Offline spielbar.">
+<meta name="apple-mobile-web-app-title" content="Fruchtzauber">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="application-name" content="Fruchtzauber">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
+<style>
+/* Startbildschirm und Safe-Area-Einstellungen */
+html{-webkit-text-size-adjust:100%;}
+@supports(padding:max(0px)){
+ .shell{padding-top:max(16px,env(safe-area-inset-top));padding-right:max(12px,env(safe-area-inset-right));padding-bottom:max(24px,env(safe-area-inset-bottom));padding-left:max(12px,env(safe-area-inset-left));}
+}
+@media(display-mode:standalone){body{overscroll-behavior-y:none}}
+
+:root{
+  color-scheme:dark;
+  --ink:#fff8ff;--muted:#e7d9fb;--stroke:rgba(255,255,255,.20);
+  --gold:#ffe182;--pink:#ff7abd;--mint:#86f4d4;--violet:#6e3bb4;--panel:#ffffff12;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{
+  font-family:ui-rounded,"Arial Rounded MT Bold",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:var(--ink);
+  background:
+   radial-gradient(circle at 12% 10%,rgba(255,164,208,.20),transparent 23%),
+   radial-gradient(circle at 92% 86%,rgba(124,224,255,.16),transparent 25%),
+   linear-gradient(135deg,#221145 0%,#4b247d 46%,#1f1b53 100%);
+  overflow-x:hidden;
+}
+body::before,body::after{content:"";position:fixed;inset:0;pointer-events:none}
+body::before{
+  opacity:.45;
+  background-image:
+   radial-gradient(circle at 10% 18%,#fff 0 2px,transparent 2.8px),
+   radial-gradient(circle at 88% 15%,#fff 0 3px,transparent 3.8px),
+   radial-gradient(circle at 68% 76%,#fff 0 1.6px,transparent 2.5px),
+   radial-gradient(circle at 30% 68%,#ffd7f4 0 2px,transparent 3px);
+  background-size:360px 360px,420px 420px,260px 260px,320px 320px;
+}
+body::after{
+  background:
+   radial-gradient(circle at 15% 30%,rgba(255,255,255,.10),transparent 20%),
+   radial-gradient(circle at 80% 70%,rgba(255,255,255,.07),transparent 22%);
+  animation:bgDrift 14s ease-in-out infinite alternate;
+}
+@keyframes bgDrift{from{transform:translateY(-4px)}to{transform:translateY(8px)}}
+.shell{position:relative;max-width:1200px;min-height:100dvh;margin:auto;display:flex;flex-direction:column;gap:18px;padding:24px 20px 28px}
+.floaters{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.floaters span{position:absolute;font-size:28px;opacity:.18;filter:blur(.2px);animation:floatUp linear infinite}
+.floaters span:nth-child(1){left:7%;top:88%;animation-duration:20s}
+.floaters span:nth-child(2){left:18%;top:100%;animation-duration:24s}
+.floaters span:nth-child(3){left:36%;top:92%;animation-duration:18s}
+.floaters span:nth-child(4){left:54%;top:99%;animation-duration:26s}
+.floaters span:nth-child(5){left:73%;top:91%;animation-duration:22s}
+.floaters span:nth-child(6){left:89%;top:97%;animation-duration:19s}
+@keyframes floatUp{from{transform:translateY(0) rotate(0deg)}to{transform:translateY(-118vh) rotate(18deg)}}
+header,.layout,footer{position:relative;z-index:1}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{display:grid;place-items:center;width:60px;height:60px;border-radius:22px;background:linear-gradient(135deg,#ffe991,#ff82be);box-shadow:0 14px 34px rgba(241,99,147,.35),inset 0 1px rgba(255,255,255,.75);font-size:32px;transform:rotate(-8deg)}
+h1{margin:0;font-size:clamp(28px,3.5vw,42px);line-height:1.02;letter-spacing:-1.7px;text-shadow:0 4px 16px rgba(30,12,80,.35)}
+.subtitle{font-size:12px;color:#eedfff;letter-spacing:1.8px;text-transform:uppercase;font-weight:900;margin-top:6px}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+.small-btn,.action{font:inherit}
+.small-btn{border:1px solid var(--stroke);background:rgba(255,255,255,.11);color:#fff;backdrop-filter:blur(10px);padding:12px 15px;border-radius:16px;font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;transition:transform .14s,background .14s,filter .14s}
+.small-btn:hover{background:rgba(255,255,255,.18);transform:translateY(-1px)}
+.small-btn:focus-visible,.tile:focus-visible,.action:focus-visible{outline:3px solid #ffe990;outline-offset:3px}
+.layout{display:grid;grid-template-columns:minmax(0,680px) minmax(270px,1fr);align-items:start;gap:24px}
+.game-panel,.side-panel{background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.08));border:1px solid rgba(255,255,255,.22);border-radius:32px;box-shadow:0 20px 60px rgba(24,10,66,.40),inset 0 1px rgba(255,255,255,.34);backdrop-filter:blur(18px)}
+.game-panel{padding:18px;min-width:0;position:relative;overflow:hidden}
+.game-panel::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 20% 18%,rgba(255,255,255,.10),transparent 28%),radial-gradient(circle at 88% 80%,rgba(255,219,128,.10),transparent 24%)}
+.score-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.stat{min-width:0;border-radius:19px;background:rgba(26,10,71,.52);border:1px solid rgba(255,255,255,.14);padding:12px 10px;text-align:center;box-shadow:inset 0 1px rgba(255,255,255,.15)}
+.stat-label{color:#cbb6ec;font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:900}
+.stat-num{font-size:clamp(18px,3vw,30px);font-weight:950;letter-spacing:-.6px;margin-top:2px}
+.stat:nth-child(2) .stat-num{color:var(--gold)}
+.stat:nth-child(3) .stat-num{color:var(--mint)}
+.board-wrap{position:relative;background:linear-gradient(180deg,#30186a,#221150);border:4px solid #bd8af0;border-radius:28px;padding:9px;box-shadow:inset 0 10px 34px rgba(15,2,39,.44),0 10px 30px rgba(16,8,55,.36);overflow:hidden}
+.board-wrap::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.06),transparent 18%,transparent 82%,rgba(255,255,255,.04))}
+.board{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;aspect-ratio:1;touch-action:none;user-select:none;position:relative;z-index:1}
+.tile{position:relative;aspect-ratio:1;border:1px solid rgba(255,255,255,.28);border-radius:16px;display:grid;place-items:center;background:linear-gradient(155deg,rgba(255,255,255,.32),rgba(255,255,255,.06) 56%,rgba(0,0,0,.18)),var(--tile-bg,#9a63c5);box-shadow:inset 0 2px 2px rgba(255,255,255,.40),inset 0 -5px 0 rgba(24,9,61,.22),0 4px 8px rgba(18,5,55,.45);cursor:pointer;min-width:0;min-height:0;padding:0;transition:transform .14s,filter .14s,box-shadow .14s;will-change:transform}
+.tile:hover{filter:brightness(1.14);transform:translateY(-2px)}
+.tile:active{transform:scale(.95)}
+.tile::before{content:"";position:absolute;left:14%;top:8%;width:42%;height:16%;border-radius:100%;background:rgba(255,255,255,.58);transform:rotate(-20deg);filter:blur(2px)}
+.tile::after{content:"";position:absolute;right:10%;bottom:12%;width:16%;height:16%;border-radius:50%;background:rgba(255,255,255,.12)}
+.tile .fruit{position:relative;font-size:clamp(26px,5.45vw,52px);line-height:1;filter:drop-shadow(0 5px 2px rgba(65,19,87,.35));pointer-events:none;transition:transform .18s}
+.tile.selected{z-index:2;box-shadow:0 0 0 3px rgba(255,248,177,.85),0 0 24px rgba(255,230,117,.92),inset 0 2px 5px rgba(255,255,255,.62);transform:scale(1.065)}
+.tile.hint{animation:hint 1s ease-in-out 2}
+.tile.invalid{animation:invalid .2s ease-in-out 2}
+.tile.clearing{animation:pop .25s ease-in forwards;pointer-events:none}
+.tile.newborn .fruit{animation:born .24s ease-out}
+.tile .special{position:absolute;right:3px;bottom:2px;display:grid;place-items:center;min-width:21px;height:21px;border-radius:50%;background:#fff9bd;color:#553374;font-size:14px;box-shadow:0 2px 7px rgba(51,18,87,.61);pointer-events:none}
+.tile.rainbow{--tile-bg:#8750ff!important;background:conic-gradient(from 35deg,#f59ccd,#ffe17b,#88f4b9,#7ab7ff,#cc8cf7,#f59ccd)}
+.tile.rainbow .fruit{font-size:clamp(28px,5vw,47px)}
+.tile.bomb{--tile-bg:#d66b30!important;background:radial-gradient(circle at 50% 55%,#ffe88a 0%,#ed834f 45%,#8d3892 100%);border:2px solid #ffe58d;box-shadow:inset 0 2px 5px rgba(255,255,255,.6),0 0 17px rgba(255,198,106,.53),0 3px 7px rgba(37,10,70,.48);animation:bombPulse 2s ease-in-out infinite}
+.tile.bomb .special{background:#fff2c5;right:1px;bottom:0;font-size:15px}
+@keyframes bombPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.23)}}
+@keyframes hint{0%,100%{box-shadow:inset 0 2px 2px rgba(255,255,255,.36)}50%{box-shadow:0 0 0 3px #ffe782,0 0 20px #fff79e;transform:scale(1.08)}}
+@keyframes invalid{0%,100%{transform:translateX(0)}40%{transform:translateX(4px)}70%{transform:translateX(-4px)}}
+@keyframes pop{0%{transform:scale(1);opacity:1}45%{transform:scale(1.19);filter:brightness(2)}100%{transform:scale(.15) rotate(17deg);opacity:0}}
+@keyframes born{from{transform:translateY(-18px) scale(.4);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.meter-block{padding:16px 3px 2px}
+.meter-top{display:flex;justify-content:space-between;gap:12px;align-items:center;font-weight:900;font-size:14px;margin-bottom:9px}
+.meter-top span:last-child{color:#ffeb9b}
+.meter{height:16px;border:1px solid rgba(255,255,255,.28);border-radius:30px;background:#1e0d4d;box-shadow:inset 0 3px 8px rgba(29,11,57,.56);overflow:hidden}
+.meter-fill{height:100%;width:0;background:linear-gradient(90deg,#ff80be,#ffba79,#ffe17e);border-radius:inherit;box-shadow:0 0 20px rgba(255,171,105,.55);transition:width .45s ease}
+.helper{font-size:12px;color:#eddcff;line-height:1.55;margin:10px 3px 0;text-align:center;min-height:38px}
+.side-panel{padding:20px;display:flex;flex-direction:column;gap:14px}
+.side-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.level-pill{display:inline-block;background:linear-gradient(90deg,#ffbd72,#ff88bd);color:#562450;border-radius:12px;padding:6px 12px;font-size:13px;font-weight:950;box-shadow:0 6px 18px rgba(255,145,179,.28)}
+.side-card{padding:17px;border:1px solid rgba(255,255,255,.16);border-radius:20px;background:rgba(32,14,72,.44);box-shadow:inset 0 1px rgba(255,255,255,.12)}
+.info-title{font-size:14px;font-weight:950;letter-spacing:.4px;margin:0 0 10px}
+.record{display:flex;align-items:center;gap:12px}.record-emoji{font-size:34px}.record strong{display:block;font-size:27px;color:var(--gold);line-height:1.15}.small-muted{font-size:12px;color:#dcc5f3}
+.guide-row{display:flex;align-items:center;gap:11px;margin:10px 0 0}
+.guide-icons{display:flex;white-space:nowrap;font-size:22px;letter-spacing:-6px;padding-right:6px}
+.guide-row span:last-child{font-size:13px;line-height:1.45;color:#f4e9ff}
+.guide-square{display:grid;grid-template-columns:repeat(2,22px);line-height:22px;font-size:21px;flex:0 0 auto}
+.side-btns{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.action{border:0;border-radius:18px;padding:15px 12px;font-size:14px;font-weight:950;cursor:pointer;color:#472557;background:linear-gradient(135deg,#ffe98c,#ffb97c);box-shadow:0 5px 0 #a14c74,0 8px 18px rgba(27,8,70,.4);transition:transform .12s,filter .12s}
+.action:hover{filter:brightness(1.07);transform:translateY(-2px)}
+.action:active{transform:translateY(4px);box-shadow:0 1px 0 #a14c74}.action.secondary{color:#fff;background:rgba(255,255,255,.16);box-shadow:0 4px 0 rgba(26,14,66,.48),0 8px 18px rgba(27,8,70,.25);border:1px solid rgba(255,255,255,.18)}.action:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(1)}
+.side-note{font-size:12px;color:#d7bfe9;text-align:center;line-height:1.55}
+#bossCard{display:none;background:linear-gradient(160deg,rgba(111,42,125,.72),rgba(52,18,92,.72));border-color:rgba(255,180,206,.28)}
+#bossCard.active{display:block;animation:bossCardIn .3s ease}
+@keyframes bossCardIn{from{transform:translateY(6px);opacity:0}to{transform:translateY(0);opacity:1}}
+.boss-top{display:flex;align-items:center;gap:12px}
+.boss-avatar{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:33px;background:radial-gradient(circle at 35% 35%,#fff7ad,#f87fc4 52%,#6d3bc5 100%);box-shadow:0 10px 24px rgba(255,122,189,.26),inset 0 1px rgba(255,255,255,.62)}
+.boss-name{font-size:21px;font-weight:950;letter-spacing:-.4px}
+.boss-sub{font-size:12px;color:#ffdeef}
+.boss-desc{font-size:13px;line-height:1.5;color:#f6e9ff;margin:12px 0}
+.boss-meter{height:14px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(20,5,42,.54);overflow:hidden}
+.boss-fill{height:100%;width:100%;background:linear-gradient(90deg,#7cf7d8,#ffd976,#ff6fb8);box-shadow:0 0 18px rgba(255,111,184,.35);transition:width .35s ease}
+.boss-meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#fce3ff;margin-top:8px}
+.boss-attack{margin-top:10px;border-radius:14px;padding:10px 12px;background:rgba(255,255,255,.07);font-size:12px;color:#ffeec1}
+.boss-flash{animation:bossHit .36s ease}
+@keyframes bossHit{0%{transform:scale(1)}35%{transform:scale(1.03);filter:brightness(1.18)}100%{transform:scale(1)}}
+.toast{position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:7;background:rgba(28,8,71,.88);border:1px solid rgba(255,255,255,.20);padding:11px 16px;border-radius:15px;font-size:13px;font-weight:800;box-shadow:0 10px 30px rgba(15,3,38,.42);animation:toastIn .16s ease}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.overlay{position:absolute;inset:0;z-index:8;display:grid;place-items:center;border-radius:30px;background:rgba(27,10,66,.73);backdrop-filter:blur(12px);padding:16px;animation:fadeIn .22s ease}.overlay.hidden{display:none}
+.modal{width:min(94%,440px);text-align:center;background:linear-gradient(155deg,#6c3498,#422273 78%);border:2px solid rgba(252,230,255,.44);box-shadow:0 20px 60px rgba(21,11,66,.66),inset 0 1px rgba(255,255,255,.42);border-radius:30px;padding:30px 25px 31px}
+.modal-art{font-size:clamp(56px,9vw,82px);letter-spacing:-12px;padding-right:12px;filter:drop-shadow(0 9px 4px rgba(38,18,76,.4));margin-bottom:6px}
+.modal h2{margin:6px 0 10px;font-size:clamp(29px,5vw,42px);line-height:1.08;letter-spacing:-1.2px}.modal p{color:#f6e6ff;line-height:1.58;font-size:14px;margin:0 0 20px}.modal .action{font-size:17px;width:100%;padding:16px}.modal small{display:block;margin-top:12px;color:#ead9ff;font-size:12px;line-height:1.45}
+footer{z-index:1;text-align:center;font-size:12px;color:#ddc9f3;line-height:1.5;padding-bottom:5px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@media (max-width: 960px){.layout{grid-template-columns:1fr}.side-panel{order:-1}.shell{padding:18px 14px 22px}}
+@media (max-width: 560px){
+  .shell{gap:14px}.board{gap:5px}.score-row{gap:8px}.stat{padding:10px 8px}.brand-icon{width:52px;height:52px;font-size:28px}.top-actions{width:100%}.small-btn{flex:1}.side-btns{grid-template-columns:1fr}.tile{border-radius:13px}
+}
+
+/* iPhone- und Android-optimierte Touch-Oberfläche */
+html{overscroll-behavior-y:contain}
+button{touch-action:manipulation;-webkit-touch-callout:none}
+.board{overscroll-behavior:contain;touch-action:none}
+.tile{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.game-panel{isolation:isolate}
+#bossCard.boss-inline-card{margin-bottom:14px;padding:12px 14px}
+#bossCard.boss-inline-card .boss-avatar{width:43px;height:43px;border-radius:13px;font-size:26px}
+#bossCard.boss-inline-card .boss-name{font-size:18px}
+#bossCard.boss-inline-card .boss-desc{margin:8px 0;font-size:12px}
+#bossCard.boss-inline-card .boss-attack{margin-top:6px;padding:8px}
+#bossCard.boss-inline-card .boss-meter{margin-top:10px}
+#bossCard.boss-inline-card .boss-top{gap:10px}
+#bossCard.boss-inline-card .info-title{margin-bottom:6px}
+#boardActions{margin-top:13px;margin-bottom:2px}
+#boardActions .action{padding:13px 12px;min-height:48px}
+#touchHelp{display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;color:#f6e6ff;margin-top:8px}
+.touch-indicator{display:inline-block;width:21px;height:21px;line-height:21px;text-align:center;border-radius:50%;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.25)}
+#resumeBadge{display:none;background:linear-gradient(90deg,#86f4d4,#ffe59d);color:#3e2851;font-size:11px;padding:4px 7px;border-radius:8px;font-weight:900}
+#resumeBadge.visible{display:inline-block}
+@media (hover:none) and (pointer:coarse){
+ .tile:hover{transform:none;filter:none}
+ .tile:active{transform:scale(.94);filter:brightness(1.16)}
+ .small-btn:hover,.action:hover{transform:none;filter:none}
+}
+@media(max-width:960px){.side-panel{order:0}}
+@media(max-width:620px){
+ .shell{padding:max(12px,env(safe-area-inset-top)) max(9px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(9px,env(safe-area-inset-left));gap:11px}
+ header{gap:9px;align-items:center;flex-wrap:nowrap}
+ h1{font-size:clamp(24px,6.6vw,32px);letter-spacing:-1.1px}
+ .subtitle{letter-spacing:.5px;font-size:9px;line-height:1.3}
+ .brand{gap:8px;min-width:0}
+ .brand-icon{width:43px;height:43px;min-width:43px;border-radius:14px;font-size:24px}
+ .top-actions{width:auto;gap:5px;flex:0 0 auto}
+ .small-btn{white-space:nowrap}
+ .small-btn{font-size:19px;padding:9px;min-width:39px;min-height:40px;border-radius:12px}
+ .top-label{display:none}
+ .game-panel{padding:10px;border-radius:23px}
+ .layout{gap:12px}
+ .score-row{gap:5px;margin-bottom:10px}
+ .stat{padding:7px 4px;border-radius:12px}
+ .stat-label{font-size:9px;letter-spacing:.2px}
+ .stat-num{font-size:clamp(20px,5.4vw,27px);margin-top:2px}
+ .board-wrap{padding:5px;border-width:3px;border-radius:18px}
+ .board{gap:3px}
+ .tile{border-radius:clamp(6px,1.7vw,10px)}
+ .tile .fruit{font-size:clamp(22px,8vw,41px)}
+ .tile.rainbow .fruit,.tile.bomb .fruit{font-size:clamp(20px,7.7vw,40px)}
+ .tile .special{min-width:14px;height:14px;font-size:10px;right:1px;bottom:0}
+ .side-panel{padding:13px;gap:10px;border-radius:21px}
+ .side-card{padding:12px;border-radius:16px}
+ .meter-block{padding:12px 3px 0}
+ .meter-top{font-size:12px;margin-bottom:6px}
+ .meter{height:13px}
+ .helper{margin:8px 3px 0;min-height:0;font-size:11px}
+ #boardActions{margin-top:10px}
+ #boardActions .action{padding:11px 8px;min-height:44px}
+ #bossCard.boss-inline-card{margin-bottom:10px;padding:9px}
+ #bossCard.boss-inline-card .info-title{font-size:11px;margin-bottom:3px}
+ #bossCard.boss-inline-card .boss-avatar{width:37px;height:37px;font-size:23px}
+ #bossCard.boss-inline-card .boss-name{font-size:15px}
+ #bossCard.boss-inline-card .boss-sub{font-size:10px}
+ #bossCard.boss-inline-card .boss-desc,#bossCard.boss-inline-card .boss-attack{display:none}
+ #bossCard.boss-inline-card .boss-meter{height:10px;margin-top:8px}
+ #bossCard.boss-inline-card .boss-meta{margin-top:5px;font-size:10px}
+ .toast{top:8px;width:max-content;max-width:95%;text-align:center;font-size:12px;padding:8px 11px}
+ .overlay{padding:11px;border-radius:21px}
+ .modal{padding:18px 14px 20px;border-radius:23px}
+ .modal h2{font-size:clamp(23px,6vw,30px)}
+ .modal p{font-size:13px;line-height:1.45;margin-bottom:13px}
+ .modal-art{font-size:clamp(44px,13vw,64px)}
+ .modal .action{padding:13px;font-size:15px}
+ footer{font-size:10px}
+}
+@media(max-width:360px){.small-btn{min-width:36px;padding:7px}.tile .fruit{font-size:clamp(20px,7.5vw,29px)}.board{gap:2px}.game-panel{padding:8px}.board-wrap{padding:3px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+.ios-install-hint{position:relative;z-index:2;display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.24);background:linear-gradient(120deg,rgba(90,45,151,.86),rgba(68,35,120,.9));box-shadow:0 10px 32px rgba(18,4,55,.3);padding:12px 14px;border-radius:17px;font-size:12px;line-height:1.45;color:#fceaff}
+.ios-install-hint[hidden]{display:none!important}
+.ios-install-hint span:first-child{font-size:23px}
+.ios-install-hint button{margin-left:auto;border:0;border-radius:10px;min-width:32px;min-height:32px;background:rgba(255,255,255,.15);color:#fff;font-size:22px;cursor:pointer}
+</style>
+
+<style>
+@media (max-width: 640px) {
+  header{display:flex;flex-direction:column;align-items:stretch;gap:11px}
+  header .brand{width:100%;min-width:0;display:flex;justify-content:flex-start}
+  header .brand h1{font-size:clamp(25px,6vw,33px)}
+  header .brand .subtitle{font-size:9px;letter-spacing:.6px;line-height:1.4}
+  header .top-actions{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  header .top-actions .small-btn{width:100%;min-width:0;min-height:42px;padding:8px 5px;font-size:12px;white-space:normal;line-height:1.25}
+  header .top-actions .top-label{display:inline}
+}
+</style>
+</head>
+<body>
+<div class="floaters" aria-hidden="true"><span>🍎</span><span>🍓</span><span>🍋</span><span>🍊</span><span>🍇</span><span>🥝</span></div>
+<div class="shell">
+ <header>
+  <div class="brand"><div class="brand-icon">🍓</div><div><h1>Fruchtzauber</h1><div class="subtitle">Windows · iPhone · Android · Früchte, Bomben & Bosse</div></div></div>
+  <div class="top-actions">
+   <button id="soundBtn" class="small-btn" title="Ton ein- oder ausschalten" aria-label="Ton ein- oder ausschalten"><span id="soundGlyph">🔊</span><span class="top-label"> Ton</span></button>
+   <button id="installAppBtn" class="small-btn" type="button" title="Spiel auf diesem Gerät installieren">⬇ App installieren</button><button id="resetBtn" class="small-btn" title="Spiel neu beginnen"><span>↻</span><span class="top-label"> Neustart</span></button>
+  </div>
+ </header>
+ <main class="layout">
+  <section class="game-panel" aria-label="Spielfeld">
+   <div class="score-row">
+    <div class="stat"><div class="stat-label">Punkte</div><div class="stat-num" id="score">0</div></div>
+    <div class="stat"><div class="stat-label">Züge übrig</div><div class="stat-num" id="moves">25</div></div>
+    <div class="stat"><div class="stat-label">Level</div><div class="stat-num" id="level">1</div></div>
+   </div>
+   <div id="bossCard" class="side-card boss-inline-card" aria-live="polite">
+      <div class="info-title">👑 Boss-Level</div>
+      <div class="boss-top">
+        <div id="bossEmoji" class="boss-avatar">🍯</div>
+        <div><div id="bossName" class="boss-name">Sir Sirup</div><div id="bossSub" class="boss-sub">Besiege den Boss vor Ablauf der Züge.</div></div>
+      </div>
+      <div id="bossDesc" class="boss-desc">Mit Kombos dem Boss Schaden zufügen.</div>
+      <div class="boss-meter"><div id="bossFill" class="boss-fill"></div></div>
+      <div class="boss-meta"><span id="bossHpText">120 / 120 LP</span><span id="bossTierText">Boss Stufe I</span></div>
+      <div id="bossAttackText" class="boss-attack">Boss-Angriff alle drei Züge: -1 Zug.</div>
+   </div>
+   <div class="board-wrap"><div id="board" class="board" role="grid" aria-label="Früchte tauschen und mindestens drei gleiche kombinieren"></div></div>
+   <div id="boardActions" class="side-btns"><button id="hintBtn" class="action secondary">💡 Tipp anzeigen</button><button id="shuffleBtn" class="action secondary">🔀 Mischen</button></div>
+   <div class="meter-block">
+    <div class="meter-top"><span id="meterLabel">⭐ Level-Ziel</span><span id="progressText">0 / 2.600</span></div>
+    <div class="meter"><div id="progressFill" class="meter-fill"></div></div>
+   </div>
+   <div id="touchHelp"><span class="touch-indicator">↔</span> Wischen oder zwei Früchte antippen</div>
+   <div class="helper" id="helper">Zwei benachbarte Früchte anklicken oder mit dem Finger verschieben.</div>
+   <div class="overlay" id="overlay"><div class="modal"><div id="modalArt" class="modal-art">🍉🍋🍓</div><h2 id="modalTitle">Fruchtzauber!</h2><p id="modalText">Tausche benachbarte Früchte und bilde Reihen aus mindestens 3 gleichen Früchten. Vier gleiche als Quadrat erzeugen eine Bombe – und alle 10 Level wartet jetzt ein Boss auf dich!</p><button id="modalBtn" class="action">Jetzt spielen ▶</button><small id="modalSmall">Mit Maus, Touchscreen oder Tastatur spielbar</small></div></div>
+  </section>
+  <aside class="side-panel">
+   <div class="side-head"><div><div class="small-muted">Dein Abenteuer <span id="resumeBadge">GESPEICHERT</span></div><strong id="levelHeadline" style="font-size:21px">Fruchtgarten</strong></div><span id="levelPill" class="level-pill">LEVEL 1</span></div>
+   <div class="side-card"><div class="info-title">🏆 Dein Rekord</div><div class="record"><div class="record-emoji">🏅</div><div><strong id="highScore">0</strong><div class="small-muted">Höchste Punktzahl</div></div></div></div>
+   <div class="side-card"><div class="info-title">So funktioniert’s</div>
+      <div class="guide-row"><div class="guide-icons">🍎🍎🍎</div><span><b>3 gleiche</b> – Früchte verschwinden und geben Punkte.</span></div>
+      <div class="guide-row"><div class="guide-icons">🍇🍇🍇🍇</div><span><b>4 gleiche</b> – Erzeugen eine Streifenfrucht.</span></div>
+      <div class="guide-row"><div class="guide-square" aria-label="Vier Erdbeeren als Quadrat, zwei oben und zwei unten"><span>🍓</span><span>🍓</span><span>🍓</span><span>🍓</span></div><span><b>2 oben + 2 unten</b> – 4 gleiche Früchte als Quadrat erzeugen eine Bombe 💣.</span></div>
+      <div class="guide-row"><div class="guide-icons">🌈</div><span><b>5 gleiche</b> – Erzeugen einen Regenbogen-Joker.</span></div>
+      <div class="guide-row"><div class="guide-icons">👑</div><span><b>Jedes 10. Level</b> – Boss mit Lebensleiste. Kombos und Spezialfrüchte machen Schaden.</span></div>
+   </div>
+
+   <div class="side-note">Bomben sprengen ein 3×3-Feld. Streifenfrüchte räumen Reihen oder Spalten ab. Regenbogen-Joker entfernen alle Früchte einer Sorte. Im Boss-Level greift der Boss alle 3 Züge an. Auf iPhone und Android funktioniert das Spiel per Tippen und Wischen.</div>
+  </aside>
+ </main>
+ <div id="iosInstallHint" class="ios-install-hint" hidden>
+   <span aria-hidden="true">📲</span>
+   <span>Als App installieren: In <b>Safari</b> auf <b>Teilen</b> und dann auf <b>„Zum Home-Bildschirm“</b> tippen.</span>
+   <button type="button" id="hideInstallHint" aria-label="Hinweis schließen">×</button>
+ </div>
+ <div id="platformTip" class="side-note" style="z-index:1;position:relative;max-width:720px;margin:0 auto;text-align:center" hidden></div>
+ <footer>Fruchtzauber · Windows · iPhone · Android · Offline nach dem ersten Laden</footer>
+</div>
+<script>
+(()=>{'use strict';
+const N=8;
+const FRUITS=[
+ {e:'🍎',name:'Apfel',bg:'#f46a86'},
+ {e:'🍊',name:'Orange',bg:'#ffab5e'},
+ {e:'🍋',name:'Zitrone',bg:'#f6cc5c'},
+ {e:'🍇',name:'Trauben',bg:'#9771e8'},
+ {e:'🍓',name:'Erdbeere',bg:'#f2679e'},
+ {e:'🥝',name:'Kiwi',bg:'#78d49b'}
+];
+const BOSSES=[
+ {name:'Sir Sirup',emoji:'🍯',attack:'Klebt dir die Pfoten zusammen und klaut alle 3 Züge einen weiteren Zug.',desc:'Ein zäher Süßigkeitenboss. Normale Kombos verletzen ihn – Spezialfrüchte besonders stark.'},
+ {name:'Baron Beere',emoji:'🫐',attack:'Lässt Beerenblitze regnen und verkürzt regelmäßig deine Restzüge.',desc:'Dieser blaue Boss liebt Kettenreaktionen. Je mehr Kombos du machst, desto schneller fällt er.'},
+ {name:'Zitronen-Zilla',emoji:'🍋',attack:'Schleudert saure Wellen und stiehlt dir jede dritte Runde einen Zug.',desc:'Sehr empfindlich gegen Bomben und Regenbogen-Joker.'},
+ {name:'Ananas-Titan',emoji:'🍍',attack:'Bringt Stachelbeben – halte genug Züge zurück!',desc:'Ein harter Endgegner. Spezialfrüchte verursachen zusätzlichen Schaden.'},
+ {name:'Drachenfrucht-König',emoji:'🐉',attack:'Entfesselt Sternenbisse und wird nur mit starken Kombos bezwungen.',desc:'Der legendäre Meisterboss. Nutze Bomben, Streifenfrüchte und Kettenreaktionen.'}
+];
+const STAGES=['Fruchtgarten','Zitronenwiese','Beerenwald','Tropeninsel','Sternenobst','Zuckerhimmel'];
+const el=id=>document.getElementById(id), boardEl=el('board');
+let board=[],level=1,score=0,levelStart=0,moves=25,selected=null,phase='menu',audioOn=true,hi=0,lastTouchDrag=0,down=null;
+let boss=null;
+try{hi=Number(localStorage.getItem('fruchtzauber-best')||0)}catch(_){/* ignore */}
+const key=(r,c)=>r+','+c, parseKey=k=>k.split(',').map(Number), inBoard=(r,c)=>r>=0&&r<N&&c>=0&&c<N, wait=ms=>new Promise(ok=>setTimeout(ok,ms));
+const choice=max=>Math.floor(Math.random()*max), piece=(fruit=choice(FRUITS.length),power=null)=>({fruit,power});
+const validSwap=(a,b)=>a&&b&&Math.abs(a.r-b.r)+Math.abs(a.c-b.c)===1;
+const get=p=>board[p.r]?.[p.c];
+const put=(p,v)=>{board[p.r][p.c]=v};
+const print=n=>Math.max(0,Math.round(n)).toLocaleString('de-DE');
+const isBossLevel=()=>level%10===0;
+const bossTier=()=>Math.max(1,Math.floor(level/10));
+const objective=()=>2600+(level-1)*820;
+const current=()=>score-levelStart;
+function createBoss(lvl){
+  const tier=Math.max(1,Math.floor(lvl/10));
+  const base=BOSSES[(tier-1)%BOSSES.length];
+  const maxHp=110+tier*38;
+  return {tier,name:base.name,emoji:base.emoji,attack:base.attack,desc:base.desc,maxHp,hp:maxHp,turns:0};
+}
+function buildBoard(){
+  let tries=0;
+  do{
+    board=Array.from({length:N},()=>Array(N).fill(null));
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+      let allowed=FRUITS.map((_,i)=>i);
+      if(c>1&&board[r][c-1].fruit===board[r][c-2].fruit)allowed=allowed.filter(n=>n!==board[r][c-1].fruit);
+      if(r>1&&board[r-1][c].fruit===board[r-2][c].fruit)allowed=allowed.filter(n=>n!==board[r-1][c].fruit);
+      if(r>0&&c>0&&board[r-1][c-1].fruit===board[r-1][c].fruit&&board[r-1][c].fruit===board[r][c-1].fruit)allowed=allowed.filter(n=>n!==board[r-1][c].fruit);
+      board[r][c]=piece(allowed[choice(allowed.length)]);
+    }
+    tries++;
+  }while(!findHint()&&tries<90);
+}
+function groups(){
+  let g=[];
+  for(let r=0;r<N;r++){
+    let c=0;
+    while(c<N){
+      let t=board[r][c],j=c+1;
+      if(!t||t.power==='rainbow'){c++;continue}
+      while(j<N&&board[r][j]&&board[r][j].fruit===t.fruit&&board[r][j].power!=='rainbow')j++;
+      if(j-c>=3)g.push(Array.from({length:j-c},(_,i)=>({r,c:c+i})));
+      c=j;
+    }
+  }
+  for(let c=0;c<N;c++){
+    let r=0;
+    while(r<N){
+      let t=board[r][c],j=r+1;
+      if(!t||t.power==='rainbow'){r++;continue}
+      while(j<N&&board[j][c]&&board[j][c].fruit===t.fruit&&board[j][c].power!=='rainbow')j++;
+      if(j-r>=3)g.push(Array.from({length:j-r},(_,i)=>({r:r+i,c})));
+      r=j;
+    }
+  }
+  return g;
+}
+function squares(){
+  const out=[];
+  for(let r=0;r<N-1;r++)for(let c=0;c<N-1;c++){
+    const p=[{r,c},{r,c:c+1},{r:r+1,c},{r:r+1,c:c+1}],first=get(p[0]);
+    if(first&&first.power!=='rainbow'&&p.every(x=>get(x)&&get(x).fruit===first.fruit&&get(x).power!=='rainbow'))out.push(p);
+  }
+  return out;
+}
+function findHint(){
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    const a={r,c},p=board[r][c];
+    for(const b of [{r,c:c+1},{r:r+1,c}]){
+      if(!inBoard(b.r,b.c))continue;
+      const q=board[b.r][b.c];
+      if(p?.power||q?.power)return[a,b];
+      put(a,q);put(b,p);
+      const ok=groups().length>0||squares().length>0;
+      put(a,p);put(b,q);
+      if(ok)return[a,b];
+    }
+  }
+  return null;
+}
+function updateBossUI(){
+  const card=el('bossCard');
+  if(!boss){card.classList.remove('active');card.style.display='none';return}
+  card.style.display='block';
+  card.classList.add('active');
+  el('bossEmoji').textContent=boss.emoji;
+  el('bossName').textContent=boss.name;
+  el('bossSub').textContent='Besiege den Boss, bevor dir die Züge ausgehen.';
+  el('bossDesc').textContent=boss.desc;
+  el('bossHpText').textContent=`${print(boss.hp)} / ${print(boss.maxHp)} LP`;
+  el('bossTierText').textContent=`Boss Stufe ${['I','II','III','IV','V','VI','VII','VIII'][Math.min(7,boss.tier-1)]||boss.tier}`;
+  el('bossAttackText').textContent='Spezialangriff: '+boss.attack;
+  el('bossFill').style.width=Math.max(0,100*boss.hp/boss.maxHp)+'%';
+}
+function update(){
+  el('score').textContent=print(score);
+  el('moves').textContent=moves;
+  el('level').textContent=level;
+  el('highScore').textContent=print(hi);
+  el('levelPill').textContent=(isBossLevel()?'BOSS ':'LEVEL ')+level;
+  el('levelHeadline').textContent=isBossLevel()?'Bosskampf: '+(boss?.name||'Boss'):STAGES[(level-1)%STAGES.length];
+  el('hintBtn').disabled=phase!=='playing';
+  el('shuffleBtn').disabled=phase!=='playing'||moves<=1;
+  if(boss){
+    el('meterLabel').textContent='👑 Boss-Lebensleiste';
+    el('progressText').textContent=`${print(boss.hp)} / ${print(boss.maxHp)} LP`;
+    el('progressFill').style.width=Math.max(0,100*boss.hp/boss.maxHp)+'%';
+    el('helper').textContent='Boss-Level! Bilde Kombos und nutze Spezialfrüchte, um den Boss zu besiegen.';
+  }else{
+    el('meterLabel').textContent='⭐ Level-Ziel';
+    el('progressText').textContent=print(current())+' / '+print(objective());
+    el('progressFill').style.width=Math.min(100,100*current()/objective())+'%';
+    el('helper').textContent='Zwei benachbarte Früchte anklicken oder mit dem Finger verschieben.';
+  }
+  updateBossUI();
+}
+function render(fresh=false){
+  const frag=document.createDocumentFragment();
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){
+    let p=board[r]?.[c];
+    let t=document.createElement('button');
+    t.type='button';
+    t.className='tile'+(selected?.r===r&&selected?.c===c?' selected':'')+(p?.power==='rainbow'?' rainbow':'')+(p?.power==='bomb'?' bomb':'')+(fresh?' newborn':'');
+    t.dataset.r=r;t.dataset.c=c;
+    t.setAttribute('role','gridcell');
+    t.setAttribute('aria-label',!p?'Leeres Feld':p.power==='rainbow'?'Regenbogen-Joker':p.power==='bomb'?'Bombe aus '+FRUITS[p.fruit].name:FRUITS[p.fruit].name+(p.power?'; Spezialfrucht':'')+', Reihe '+(r+1)+', Spalte '+(c+1));
+    if(p){
+      t.style.setProperty('--tile-bg',FRUITS[p.fruit].bg);
+      let fruit=document.createElement('span');
+      fruit.className='fruit';
+      fruit.textContent=p.power==='rainbow'?'🌈':p.power==='bomb'?'💣':FRUITS[p.fruit].e;
+      t.append(fruit);
+      if(p.power==='row'||p.power==='col'||p.power==='bomb'){
+        let s=document.createElement('span');
+        s.className='special';
+        s.textContent=p.power==='row'?'↔':p.power==='col'?'↕':FRUITS[p.fruit].e;
+        t.append(s);
+      }
+    }
+    frag.append(t);
+  }
+  boardEl.replaceChildren(frag);
+  update();
+}
+function beep(kind='match'){
+  if(!audioOn)return;
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;
+    const ctx=beep.ctx||(beep.ctx=new AudioCtx());if(ctx.state==='suspended')ctx.resume();
+    const o=ctx.createOscillator(),v=ctx.createGain(),at=ctx.currentTime;
+    o.connect(v).connect(ctx.destination);
+    o.type=kind==='win'?'sine':kind==='boss'?'square':'triangle';
+    o.frequency.setValueAtTime(kind==='bad'?210:kind==='win'?590:kind==='boss'?320:415,at);
+    o.frequency.exponentialRampToValueAtTime(kind==='bad'?160:kind==='win'?1180:kind==='boss'?200:680,at+.18);
+    v.gain.setValueAtTime(.0001,at);v.gain.exponentialRampToValueAtTime(.055,at+.014);v.gain.exponentialRampToValueAtTime(.0001,at+.20);
+    o.start(at);o.stop(at+.22);
+  }catch(_){}
+}
+function toast(message){
+  document.querySelectorAll('.toast').forEach(x=>x.remove());
+  let t=document.createElement('div');t.className='toast';t.textContent=message;
+  document.querySelector('.board-wrap').append(t);
+  setTimeout(()=>t.remove(),1100);
+}
+function showModal(art,title,body,label,onClick,small=''){
+  el('modalArt').textContent=art;el('modalTitle').textContent=title;el('modalText').textContent=body;el('modalBtn').textContent=label;el('modalSmall').textContent=small;el('modalBtn').onclick=onClick;el('overlay').classList.remove('hidden');
+}
+function hideModal(){el('overlay').classList.add('hidden')}
+el('overlay').addEventListener('click',e=>{if(e.target===el('overlay')&&phase==='playing')hideModal()});
+function flashBoss(){
+  const card=el('bossCard');
+  if(!boss||!card.classList.contains('active'))return;
+  card.classList.remove('boss-flash');
+  void card.offsetWidth;
+  card.classList.add('boss-flash');
+}
+function setupLevel(){
+  selected=null;
+  moves=isBossLevel()?Math.max(24,30-bossTier()):Math.max(22,27-Math.floor((level-1)/3));
+  levelStart=score;
+  boss=isBossLevel()?createBoss(level):null;
+  buildBoard();
+  phase='playing';
+  hideModal();
+  render(true);
+  if(boss)toast('👑 Boss-Level '+level+'!'); else toast('Level '+level+' – Los geht’s!');
+  saveGame();
+}
+function saveGame(){
+  if(!['playing','won','lost'].includes(phase))return;
+  try{
+    localStorage.setItem('fruchtzauber-android-save-v1',JSON.stringify({
+      level,score,levelStart,moves,board,boss,phase
+    }));
+  }catch(_){/* Bei eingeschränktem Browserspeicher bleibt das Spiel spielbar. */}
+}
+function loadGame(){
+  try{
+    const raw=localStorage.getItem('fruchtzauber-android-save-v1');
+    if(!raw)return null;
+    const data=JSON.parse(raw);
+    if(!data||!Number.isInteger(data.level)||data.level<1||
+       !Number.isFinite(data.score)||!Number.isFinite(data.levelStart)||
+       !Number.isInteger(data.moves)||data.moves<0||
+       !Array.isArray(data.board)||data.board.length!==N||
+       !data.board.every(row=>Array.isArray(row)&&row.length===N&&row.every(p=>p&&Number.isInteger(p.fruit)&&p.fruit>=0&&p.fruit<FRUITS.length))||
+       !['playing','won','lost'].includes(data.phase))return null;
+    return data;
+  }catch(_){return null}
+}
+function vibrate(type='short'){
+  try{if(navigator.vibrate)navigator.vibrate(type==='boss'?[20,45,35]:type==='bomb'?[24,35,24]:10)}catch(_){}
+}
+function newGame(){level=1;score=0;setupLevel()}
+function restart(){
+  if(phase==='menu'){newGame();return}
+  if(phase==='resolving')return;
+  showModal('🔄🍎','Neustart?','Du beginnst bei Level 1. Dein Rekord bleibt gespeichert. Boss-Level erscheinen weiterhin alle 10 Level.','Neues Spiel starten',newGame,'Zum Abbrechen neben das Fenster klicken.');
+}
+function points(x){score+=x;if(score>hi){hi=score;try{localStorage.setItem('fruchtzauber-best',String(hi))}catch(_){}}update()}
+function specialStart(a,b){
+  const clear=new Set(),pa=get(a),pb=get(b);
+  if(pa?.power==='rainbow'&&pb?.power==='rainbow'){
+    for(let r=0;r<N;r++)for(let c=0;c<N;c++)clear.add(key(r,c));
+    return clear;
+  }
+  for(const [p,partner] of [[a,b],[b,a]]){
+    const tile=get(p);if(!tile?.power)continue;
+    clear.add(key(p.r,p.c));
+    if(tile.power==='rainbow'){
+      const other=get(partner);
+      for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(board[r][c]?.fruit===other?.fruit)clear.add(key(r,c));
+    }
+  }
+  return clear;
+}
+function bossDamage(clearCount,spawnCount,chain,specialCount,bombCount){
+  if(!boss)return 0;
+  const dmg=Math.max(7,Math.round(clearCount*1.8+spawnCount*11+(chain-1)*6+specialCount*4+bombCount*6));
+  boss.hp=Math.max(0,boss.hp-dmg);
+  flashBoss();
+  update();
+  return dmg;
+}
+async function attempt(a,b){
+  if(phase!=='playing'||!validSwap(a,b))return;
+  phase='resolving';selected=null;
+  const one=get(a),two=get(b);put(a,two);put(b,one);render();
+  await wait(150);
+  const start=specialStart(a,b),found=groups(),blocks=squares();
+  if(!start.size&&!found.length&&!blocks.length){
+    put(a,one);put(b,two);render();
+    for(const p of [a,b])boardEl.querySelector(`[data-r="${p.r}"][data-c="${p.c}"]`)?.classList.add('invalid');
+    beep('bad');phase='playing';update();return;
+  }
+  moves--;update();beep();
+  const battle=await resolve(start,[b,a]);
+  if(boss&&boss.hp>0){
+    boss.turns++;
+    if(boss.turns%3===0){
+      moves=Math.max(0,moves-1);
+      toast(`⚠️ ${boss.name} greift an: -1 Zug!`);
+      beep('boss');
+      update();
+    }
+  }
+  if(boss&&boss.hp<=0){
+    phase='won';
+    const bonus=150*boss.tier;
+    points(bonus);
+    beep('win');
+    showModal(`${boss.emoji}💥🏆`,'Boss besiegt!',`Du hast ${boss.name} in Level ${level} besiegt und erhältst ${print(bonus)} Bonuspunkte! Gesamtpunktzahl: ${print(score)}.`,`Weiter zu Level ${level+1} ➜`,()=>{level++;setupLevel()},'Starke Kombos und Spezialfrüchte richten besonders viel Schaden an.');
+  }else if(!boss&&current()>=objective()){
+    phase='won';beep('win');
+    showModal('🎉🏆🍓','Level geschafft!',`Du hast ${print(current())} Punkte in Level ${level} gesammelt! Gesamtpunktzahl: ${print(score)}.`,`Weiter zu Level ${level+1} ➜`,()=>{level++;setupLevel()},'Neue Früchte-Kombinationen warten auf dich.');
+  }else if(moves===0){
+    phase='lost';beep('bad');
+    if(boss){
+      showModal(`${boss.emoji}😈`,'Der Boss war stärker',`${boss.name} hat noch ${print(boss.hp)} LP übrig. Versuch den Bosskampf erneut!`,'Boss-Level wiederholen ↻',()=>{score=levelStart;setupLevel()},'Tipp: Bomben, Streifenfrüchte und Kettenreaktionen verursachen viel Schaden.');
+    }else{
+      showModal('🍋💔','Keine Züge mehr',`Es fehlen noch ${print(objective()-current())} Punkte bis zum Ziel. Versuch es noch einmal!`,'Level wiederholen ↻',()=>{score=levelStart;setupLevel()},'Dein Highscore bleibt gespeichert.');
+    }
+  }else{
+    phase='playing';update();
+    if(boss&&battle.totalDamage>0)toast(`⚔️ ${print(battle.totalDamage)} Boss-Schaden!`);
+  }
+  saveGame();
+}
+async function resolve(seed,priority){
+  let chain=0,totalDamage=0;
+  while(true){
+    const matches=groups(),blocks=squares();
+    if(!matches.length&&!blocks.length&&(!seed||!seed.size))break;
+    chain++;
+    let clear=new Set(seed||[]),spawn=new Map(),claimed=new Set();
+    for(const g of matches)for(const p of g)clear.add(key(p.r,p.c));
+    for(const block of blocks)for(const p of block)clear.add(key(p.r,p.c));
+    for(const block of blocks){
+      if(block.some(p=>claimed.has(key(p.r,p.c))))continue;
+      const preferred=[...priority,...block].find(p=>block.some(k=>k.r===p.r&&k.c===p.c)&&get(p)&&!get(p).power&&!spawn.has(key(p.r,p.c)));
+      if(preferred){spawn.set(key(preferred.r,preferred.c),{fruit:get(preferred).fruit,power:'bomb'});for(const p of block)claimed.add(key(p.r,p.c));}
+    }
+    for(const g of matches){
+      if(g.length<4||g.some(p=>claimed.has(key(p.r,p.c))))continue;
+      const preferred=[...priority,...g].find(p=>g.some(k=>k.r===p.r&&k.c===p.c)&&get(p)&&!get(p).power&&!spawn.has(key(p.r,p.c)));
+      if(!preferred)continue;
+      const horizontal=g.every(p=>p.r===g[0].r),kind=g.length>=5?'rainbow':horizontal?'row':'col';
+      spawn.set(key(preferred.r,preferred.c),{fruit:get(preferred).fruit,power:kind});
+    }
+    for(const k of spawn.keys())clear.delete(k);
+    const queue=[...clear],checked=new Set();
+    while(queue.length){
+      const k=queue.pop();if(checked.has(k))continue;checked.add(k);
+      const [r,c]=parseKey(k),p=board[r]?.[c];if(!p)continue;
+      let affected=[];
+      if(p.power==='row')affected=Array.from({length:N},(_,i)=>key(r,i));
+      if(p.power==='col')affected=Array.from({length:N},(_,i)=>key(i,c));
+      if(p.power==='rainbow')affected=Array.from({length:N*N},(_,i)=>key(Math.floor(i/N),i%N));
+      if(p.power==='bomb')for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++)if(inBoard(r+dr,c+dc))affected.push(key(r+dr,c+dc));
+      for(const x of affected){if(spawn.has(x))continue;if(!clear.has(x))clear.add(x);if(!checked.has(x))queue.push(x)}
+    }
+    for(const k of spawn.keys())clear.delete(k);
+    if(!clear.size&&!spawn.size)break;
+    let specialCount=0,bombCount=0;
+    for(const k of clear){
+      const [r,c]=parseKey(k);const p=board[r][c];
+      if(p?.power){specialCount++;if(p.power==='bomb')bombCount++;}
+      boardEl.querySelector(`[data-r="${r}"][data-c="${c}"]`)?.classList.add('clearing');
+    }
+    const bombsMade=[...spawn.values()].filter(p=>p.power==='bomb').length;
+    const damage=bossDamage(clear.size,spawn.size,chain,specialCount,bombCount);
+    totalDamage+=damage;
+    if(chain>1)toast(`Kettenreaktion ×${chain}!`);else if(bombsMade)toast('💣 Bombe erzeugt!');else if(spawn.size)toast('Super-Kombi!');else if(bombCount)toast('💥 BOOM!');
+    if(bombCount||bombsMade)vibrate('bomb');
+    points(clear.size*65*chain+(spawn.size?spawn.size*140:0));
+    beep();
+    await wait(255);
+    for(const k of clear){const [r,c]=parseKey(k);board[r][c]=null}
+    for(const [k,p] of spawn){const [r,c]=parseKey(k);board[r][c]=p}
+    for(let c=0;c<N;c++){
+      let write=N-1;
+      for(let r=N-1;r>=0;r--)if(board[r][c]){board[write][c]=board[r][c];if(write!==r)board[r][c]=null;write--}
+      while(write>=0){board[write][c]=piece();write--}
+    }
+    render(true);
+    await wait(240);
+    seed=null;priority=[];
+    if(chain>=18)break;
+    if(boss&&boss.hp<=0)break;
+  }
+  if(!findHint()){
+    toast('Spielfeld wird gemischt!');
+    await wait(400);
+    buildBoard();
+    render(true);
+  }
+  return {totalDamage};
+}
+function tap(r,c){
+  if(phase!=='playing')return;
+  const p={r,c};
+  if(!selected){selected=p;render();return}
+  if(selected.r===r&&selected.c===c){selected=null;render();return}
+  if(validSwap(selected,p)){const a=selected;selected=null;attempt(a,p)}else{selected=p;render()}
+}
+boardEl.addEventListener('pointerdown',e=>{
+  if(phase!=='playing')return;
+  const t=e.target.closest('.tile');
+  if(!t)return;
+  down={pointerId:e.pointerId,r:Number(t.dataset.r),c:Number(t.dataset.c),x:e.clientX,y:e.clientY};
+  try{boardEl.setPointerCapture(e.pointerId)}catch(_){}
+});
+boardEl.addEventListener('pointerup',e=>{
+  if(!down||phase!=='playing'||down.pointerId!==e.pointerId){down=null;return}
+  const d=down;down=null;
+  const diffX=e.clientX-d.x,diffY=e.clientY-d.y;
+  lastTouchDrag=Date.now(); // vermeidet doppeltes Auslösen durch simulierte Klicks
+  if(Math.max(Math.abs(diffX),Math.abs(diffY))>17){
+    const b={r:d.r,c:d.c};
+    if(Math.abs(diffX)>Math.abs(diffY))b.c+=Math.sign(diffX);
+    else b.r+=Math.sign(diffY);
+    if(inBoard(b.r,b.c))attempt({r:d.r,c:d.c},b);
+  }else tap(d.r,d.c);
+});
+boardEl.addEventListener('pointercancel',()=>down=null);
+boardEl.addEventListener('click',e=>{
+  if(Date.now()-lastTouchDrag<500)return;
+  const t=e.target.closest('.tile');
+  if(t)tap(Number(t.dataset.r),Number(t.dataset.c));
+});
+boardEl.addEventListener('keydown',e=>{
+  const t=e.target.closest('.tile');if(!t)return;
+  const dirs={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]};
+  if(dirs[e.key]){e.preventDefault();const r=Number(t.dataset.r)+dirs[e.key][0],c=Number(t.dataset.c)+dirs[e.key][1];if(inBoard(r,c))boardEl.querySelector(`[data-r="${r}"][data-c="${c}"]`)?.focus()}
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();lastTouchDrag=Date.now();tap(Number(t.dataset.r),Number(t.dataset.c))}
+});
+el('hintBtn').onclick=()=>{if(phase!=='playing')return;const h=findHint();if(!h)return;for(const p of h)boardEl.querySelector(`[data-r="${p.r}"][data-c="${p.c}"]`)?.classList.add('hint');toast('Probiere diese beiden!')};
+el('shuffleBtn').onclick=()=>{
+  if(phase!=='playing'||moves<2)return;
+  selected=null;moves--;buildBoard();render(true);toast('Neu gemischt – 1 Zug');
+  if(moves===0){phase='lost';showModal('🍋💔','Keine Züge mehr','Versuche das Level erneut.','Level wiederholen ↻',()=>{score=levelStart;setupLevel()})}
+  saveGame();
+};
+el('resetBtn').onclick=restart;
+el('soundBtn').onclick=()=>{audioOn=!audioOn;el('soundGlyph').textContent=audioOn?'🔊':'🔇';if(audioOn)beep()};
+el('modalBtn').onclick=newGame;
+const saved=loadGame();
+if(saved){
+  level=saved.level;score=saved.score;levelStart=saved.levelStart;
+  moves=saved.moves;board=saved.board;boss=saved.boss;
+  el('resumeBadge').classList.add('visible');
+  if(saved.phase==='won'){
+    level++;setupLevel();phase='menu';
+    showModal('🎉🍓','Weiter zum nächsten Level?',`Dein Fortschritt wurde gefunden. Weiter geht es mit Level ${level}.`,'Weiter spielen ▶',()=>{phase='playing';hideModal();render(true);saveGame()},'Dein Rekord bleibt gespeichert.');
+  }else if(saved.phase==='lost'){
+    score=levelStart;setupLevel();phase='menu';
+    showModal('🍋✨','Noch ein Versuch?',`Du kannst Level ${level} noch einmal versuchen.`,'Level starten ▶',()=>{phase='playing';hideModal();render(true);saveGame()},'Zum Neustart ganz von vorne oben auf ↻ drücken.');
+  }else{
+    phase='menu';render(true);
+    showModal('🍎✨','Willkommen zurück!',`Dein Spielstand wurde gespeichert. Du bist in Level ${level} und hast noch ${moves} Züge.`, 'Weiterspielen ▶',()=>{phase='playing';hideModal();render(true);saveGame()},'Für ein neues Spiel oben ↻ Neustart wählen.');
+  }
+}else{
+  buildBoard();render(true);
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveGame()});
+})();
+</script>
+<script>
+// Installation per Browser (iPhone: Safari-Share-Menü, Android/Windows: Install-Prompt).
+(function(){
+  const btn=document.getElementById('installAppBtn');
+  const hint=document.getElementById('iosInstallHint');
+  const tip=document.getElementById('platformTip');
+  let pendingPrompt=null;
+  const ua=navigator.userAgent;
+  const ios=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const mobile=/Android|iPhone|iPad|iPod/i.test(ua);
+  const standalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  function help(text){tip.hidden=false;tip.textContent=text;}
+  if(ios&&!standalone()){
+    try{if(!sessionStorage.getItem('fruchtzauber-hide-ios-hint'))hint.hidden=false;}catch(_){hint.hidden=false;}
+  }
+  document.getElementById('hideInstallHint').addEventListener('click',function(){hint.hidden=true;try{sessionStorage.setItem('fruchtzauber-hide-ios-hint','1')}catch(_){};});
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();pendingPrompt=e;btn.hidden=false;});
+  window.addEventListener('appinstalled',function(){btn.hidden=true;tip.hidden=true;pendingPrompt=null;});
+  if(standalone())btn.hidden=true;
+  btn.addEventListener('click',async function(){
+    if(pendingPrompt){
+      const prompt=pendingPrompt;pendingPrompt=null;
+      prompt.prompt();
+      try{await prompt.userChoice;}catch(_){}
+      return;
+    }
+    if(ios)help('iPhone: Diese Website in Safari öffnen, Teilen antippen und „Zum Home-Bildschirm“ wählen.');
+    else if(/Android/i.test(ua))help('Android: Chrome-Menü (⋮) öffnen und „App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen.');
+    else help('Windows: Diese Website in Edge oder Chrome öffnen und im Browser-Menü „Diese Website als App installieren“ wählen.');
+  });
+  if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
+    window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(function(){});});
+  }
+})();
+</script>
+</body>
+</html>
